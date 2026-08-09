@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     llm_provider: str = "mock"
     llm_model: str = "mock-model"
 
+    embedding_provider: str = "mock"
+    embedding_model: str = "mock-embedding"
+    embedding_dimensions: int = 1536
+
     azure_openai_endpoint: str | None = None
     azure_openai_api_key: str | None = None
     azure_openai_api_version: str = "2024-10-21"
