@@ -14,6 +14,13 @@ class Settings(BaseSettings):
     database_url: str
     redis_url: str
 
+    llm_provider: str = "mock"
+    llm_model: str = "mock-model"
+
+    azure_openai_endpoint: str | None = None
+    azure_openai_api_key: str | None = None
+    azure_openai_api_version: str = "2024-10-21"
+
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
         env_file_encoding="utf-8",

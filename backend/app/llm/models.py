@@ -1,10 +1,17 @@
+from enum import StrEnum
+
 from pydantic import BaseModel, Field
 
 
+class ChatMessageRole(StrEnum):
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
+    DEVELOPER = "developer"
+
+
 class ChatMessage(BaseModel):
-    role: str = Field(
-        description="Message role such as system, user, or assistant",
-    )
+    role: str = ChatMessageRole
     content: str
 
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
+from app.llm.factory import create_llm_provider
 from app.llm.models import ChatRequest, ChatResponse
-from app.llm.providers.mock import MockLLMProvider
 from app.llm.service import LLMService
 
 router = APIRouter(
@@ -11,7 +11,7 @@ router = APIRouter(
 
 
 llm_service = LLMService(
-    provider=MockLLMProvider(),
+    provider=create_llm_provider(),
 )
 
 
