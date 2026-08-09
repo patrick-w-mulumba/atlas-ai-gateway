@@ -7,7 +7,7 @@ class Retriever(ABC):
     @abstractmethod
     async def retrieve(
         self,
-        query: str,
+        embedding: list[float],
         top_k: int = 5,
     ) -> list[RetrievalResult]:
         raise NotImplementedError

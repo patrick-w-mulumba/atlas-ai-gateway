@@ -4,7 +4,7 @@ from app.rag.providers.memory import MemoryRetriever
 
 
 @pytest.mark.asyncio
-async def test_memory_retriever_returns_relevant_chunks() -> None:
+async def test_memory_retriever_returns_chunks() -> None:
     chunks = [
         DocumentChunk(
             id="1",
@@ -14,15 +14,16 @@ async def test_memory_retriever_returns_relevant_chunks() -> None:
         DocumentChunk(
             id="2",
             document_id="doc-2",
-            content="PostgreSQL is a relational database.",
+            content="PostgresSQL is a relational database.",
         ),
     ]
 
     retriever = MemoryRetriever(chunks)
 
-    results = await retriever.retrieve(
-        "Python AI engineering",
-    )
+    embedding = [0.1] * 1536
+
+    results = await retriever.retrieve(embedding=embedding, top_k=1)
 
     assert len(results) == 1
     assert results[0].chunk.id == "1"
+    assert results[0].score == 1.0

@@ -21,7 +21,7 @@ class DocumentChunk(Base):
         nullable=False,
     )
 
-    context: Mapped[str] = mapped_column(
+    content: Mapped[str] = mapped_column(
         Text,
         nullable=False,
     )

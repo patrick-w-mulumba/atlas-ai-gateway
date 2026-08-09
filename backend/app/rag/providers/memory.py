@@ -8,32 +8,16 @@ class MemoryRetriever(Retriever):
 
     async def retrieve(
         self,
-        query: str,
+        embedding: list[float],
         top_k: int = 5,
     ) -> list[RetrievalResult]:
 
-        query_words = set(query.lower().split())
-
-        results: list[RetrievalResult] = []
-
-        for chunk in self._chunks:
-            content_words = set(chunk.content.lower().split())
-
-            overlap = query_words.intersection(content_words)
-
-            if overlap:
-                score = len(overlap) / len(query_words)
-
-                results.append(
-                    RetrievalResult(
-                        chunk=chunk,
-                        score=score,
-                    )
-                )
-
-        results.sort(
-            key=lambda result: result.score,
-            reverse=True,
-        )
+        results = [
+            RetrievalResult(
+                chunk=chunk,
+                score=1.0,
+            )
+            for chunk in self._chunks
+        ]
 
         return results[:top_k]
