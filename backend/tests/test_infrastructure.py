@@ -7,8 +7,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 @pytest.mark.asyncio
 async def test_postgres_connection() -> None:
     engine = create_async_engine(
-        "postgresql+asyncpg://atlas:atlas_dev_password"
-        "@localhost:5432/atlas"
+        "postgresql+asyncpg://atlas:atlas_dev_password@localhost:5432/atlas"
     )
 
     async with engine.connect() as connection:

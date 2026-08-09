@@ -8,7 +8,7 @@ from app.models.base import Base
 
 
 class Conversation(Base):
-    __tablename__ = 'conversations'
+    __tablename__ = "conversations"
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True,

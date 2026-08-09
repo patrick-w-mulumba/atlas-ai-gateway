@@ -2,7 +2,6 @@ from redis.asyncio import Redis
 
 from app.core.config import get_settings
 
-
 settings = get_settings()
 
 REDIS_URL = "redis://localhost:6379/0"
