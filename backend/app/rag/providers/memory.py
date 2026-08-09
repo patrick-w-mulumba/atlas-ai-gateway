@@ -3,7 +3,6 @@ from app.rag.retriever import Retriever
 
 
 class MemoryRetriever(Retriever):
-
     def __init__(self, chunks: list[DocumentChunk]) -> None:
         self._chunks = chunks
 

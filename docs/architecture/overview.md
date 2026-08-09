@@ -115,3 +115,23 @@ The platform should implement:
 Secrets should never be stored in source control.
 
 External tools should be explicitly authorized and validated before execution.
+
+## LLM Provider Architecture
+
+Atlas uses a provider abstraction to prevent application-level code from being coupled to a specific LLM vendor.
+
+The application interacts with the 'LLMProvider' interface rather than directly with the provider SDKS,
+
+Current implementations include:
+
+- Mock provider
+- Azure OpenAI provider
+
+This design allows additional providers to be introduced without changing the API or application layers.
+
+The provider layer is also responsible for handling external-provider concerns such as:
+
+- timeouts
+- retries
+- provider-specific errors
+- response normalization
