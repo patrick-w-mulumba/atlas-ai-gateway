@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.api.routes.llm import router as llm_router
+from app.api.routes.rag import router as rag_retriever
 
 app = FastAPI(
     title="Atlas AI Gateway",
@@ -15,3 +16,4 @@ async def health_check() -> dict[str, str]:
 
 
 app.include_router(llm_router)
+app.include_router(rag_retriever)
