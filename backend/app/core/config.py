@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     azure_openai_api_key: str | None = None
     azure_openai_api_version: str = "2024-10-21"
 
+    rag_min_relevance_score: float = 0.7
+
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
         env_file_encoding="utf-8",

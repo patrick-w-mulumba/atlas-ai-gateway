@@ -68,3 +68,42 @@ async def test_rag_end_to_end(db_session) -> None:
 
     assert response.sources[0].score > 0.9
     assert "refund" in response.sources[0].content.lower()
+
+
+@pytest.mark.asyncio
+async def test_rag_service_rejects_irrelevant_context(db_session) -> None:
+
+    embedding_provider = TestEmbeddingProvider()
+
+    ingestion_service = IngestionService(
+        loader=TextLoader(),
+        chunker=SimpleChunker(
+            chunk_size=200,
+            overlap=20,
+        ),
+        embedding_provider=embedding_provider,
+    )
+
+    await ingestion_service.ingest(
+        session=db_session,
+        filename="refund_policy.txt",
+        content_type="text/plain",
+        content=b"Customers may request a refund within 30 days of purchase.",
+    )
+
+    retriever = PgVectorRetriever(session=db_session)
+
+    rag_service = RAGService(
+        embedding_provider=embedding_provider,
+        retriever=retriever,
+        llm_service=TestLLMService(),
+        min_relevance_score=0.7,
+    )
+
+    response = await rag_service.answer(
+        question="What is our parental leave policy?",
+        top_k=3,
+    )
+
+    assert response.sources == []
+    assert "dont have enough information" in response.answer
