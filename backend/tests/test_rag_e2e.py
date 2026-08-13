@@ -69,6 +69,8 @@ async def test_rag_end_to_end(db_session) -> None:
     assert response.sources[0].score > 0.9
     assert "refund" in response.sources[0].content.lower()
 
+    assert response.sources[0].filename == "refund_policy.txt"
+
 
 @pytest.mark.asyncio
 async def test_rag_service_rejects_irrelevant_context(db_session) -> None:

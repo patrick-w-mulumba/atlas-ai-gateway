@@ -17,6 +17,7 @@ class FakeRetriever:
         self,
         embedding: list[float],
         top_k: int = 5,
+        filters: dict[str, str] | None = None,
     ) -> list[RetrievalResult]:
 
         return [
@@ -25,6 +26,7 @@ class FakeRetriever:
                     id="chunk-1",
                     document_id="doc-1",
                     content="Python is a programming language.",
+                    filename="test.txt",
                 ),
                 score=0.95,
             )

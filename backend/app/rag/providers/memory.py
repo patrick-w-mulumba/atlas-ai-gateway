@@ -10,14 +10,24 @@ class MemoryRetriever(Retriever):
         self,
         embedding: list[float],
         top_k: int = 5,
+        filters: dict[str, str] | None = None,
     ) -> list[RetrievalResult]:
+
+        filtered_chunks = self._chunks
+
+        if filters:
+            filtered_chunks = [
+                chunk
+                for chunk in filtered_chunks
+                if all(chunk.metadata.get(key) == value for key, value in filters.items())
+            ]
 
         results = [
             RetrievalResult(
                 chunk=chunk,
                 score=1.0,
             )
-            for chunk in self._chunks
+            for chunk in filtered_chunks
         ]
 
         return results[:top_k]

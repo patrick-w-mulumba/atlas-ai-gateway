@@ -24,6 +24,7 @@ class IngestionService:
         filename: str,
         content_type: str,
         content: bytes,
+        metadata: dict[str, str] | None = None,
     ) -> Document:
 
         text = await self._loader.load(content)
@@ -33,6 +34,7 @@ class IngestionService:
         document = Document(
             filename=filename,
             content_type=content_type,
+            document_metadata=metadata or {},
         )
 
         session.add(document)

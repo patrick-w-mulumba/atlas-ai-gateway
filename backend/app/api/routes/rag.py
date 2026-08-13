@@ -20,4 +20,5 @@ async def query(
     return await rag_service.answer(
         question=request.question,
         top_k=request.top_k,
+        filters=request.filters,
     )

@@ -22,6 +22,7 @@ class RAGService:
         self,
         question: str,
         top_k: int = 5,
+        filters: dict[str, str] | None = None,
     ) -> RAGResponse:
 
         query_embedding = await self._embedding_provider.embed(question)
@@ -29,6 +30,7 @@ class RAGService:
         results = await self._retriever.retrieve(
             embedding=query_embedding,
             top_k=top_k,
+            filters=filters,
         )
 
         relevant_results = [
@@ -41,6 +43,7 @@ class RAGService:
                 chunk_id=result.chunk.id,
                 content=result.chunk.content,
                 score=result.score,
+                filename=result.chunk.filename,
             )
             for result in relevant_results
         ]

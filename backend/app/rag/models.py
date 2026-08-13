@@ -6,6 +6,7 @@ class DocumentChunk(BaseModel):
     document_id: str
     content: str
     metadata: dict[str, str] = Field(default_factory=dict)
+    filename: str
 
 
 class RetrievalResult(BaseModel):
@@ -21,12 +22,17 @@ class RAGRequest(BaseModel):
         le=20,
     )
 
+    filters: dict[str, str] = Field(
+        default_factory=dict,
+    )
+
 
 class RAGSource(BaseModel):
     document_id: str
     chunk_id: str
     content: str
     score: float
+    filename: str
 
 
 class RAGResponse(BaseModel):

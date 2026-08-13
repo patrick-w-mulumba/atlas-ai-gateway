@@ -9,5 +9,6 @@ class Retriever(ABC):
         self,
         embedding: list[float],
         top_k: int = 5,
+        filters: dict[str, str] | None = None,
     ) -> list[RetrievalResult]:
         raise NotImplementedError
