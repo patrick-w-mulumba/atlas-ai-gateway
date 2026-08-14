@@ -1,6 +1,7 @@
 from app.embeddings.provider import EmbeddingProvider
 from app.llm.models import ChatMessage, ChatRequest
 from app.llm.service import LLMService
+from app.observability.tracing import tracer
 from app.rag.models import RAGResponse, RAGSource
 from app.rag.retriever import Retriever
 
@@ -11,7 +12,7 @@ class RAGService:
         embedding_provider: EmbeddingProvider,
         llm_service: LLMService,
         retriever: Retriever,
-        min_relevance_score: float = 0.7,
+        min_relevance_score: float = 0.6,
     ) -> None:
         self._embedding_provider = embedding_provider
         self._llm_service = llm_service
@@ -25,17 +26,27 @@ class RAGService:
         filters: dict[str, str] | None = None,
     ) -> RAGResponse:
 
-        query_embedding = await self._embedding_provider.embed(question)
+        with tracer.start_as_current_span("rag.embedding") as span:
+            query_embedding = await self._embedding_provider.embed(question)
 
-        results = await self._retriever.retrieve(
-            embedding=query_embedding,
-            top_k=top_k,
-            filters=filters,
-        )
+            span.set_attribute("rag.question_length", len(question))
 
-        relevant_results = [
-            result for result in results if result.score >= self._min_relevance_score
-        ]
+        with tracer.start_as_current_span("rag.retrieval") as span:
+            results = await self._retriever.retrieve(
+                embedding=query_embedding,
+                top_k=top_k,
+                filters=filters,
+            )
+
+            span.set_attribute("rag.top_k", top_k)
+
+            span.set_attribute("rag.result_count", len(results))
+
+            relevant_results = [
+                result for result in results if result.score >= self._min_relevance_score
+            ]
+
+            span.set_attribute("rag.relevant_results", len(relevant_results))
 
         sources = [
             RAGSource(
@@ -87,7 +98,12 @@ class RAGService:
             ],
         )
 
-        response = await self._llm_service.chat(request)
+        with tracer.start_as_current_span("rag.generation") as span:
+            response = await self._llm_service.chat(request)
+
+            span.set_attribute("llm.provider", response.provider)
+
+            span.set_attribute("llm.model", response.model)
 
         return RAGResponse(
             answer=response.content,
