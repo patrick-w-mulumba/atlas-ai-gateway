@@ -1,10 +1,34 @@
-from openai import AsyncAzureOpenAI
+from openai import (
+    APIConnectionError,
+    APITimeoutError,
+    AsyncAzureOpenAI,
+    InternalServerError,
+    RateLimitError,
+)
 from openai.types.chat import ChatCompletion
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.core.config import get_settings
 from app.llm.models import ChatRequest, ChatResponse
 from app.llm.provider import LLMProvider
+
+_llm_retry = retry(
+    retry=retry_if_exception_type(
+        (
+            APITimeoutError,
+            APIConnectionError,
+            RateLimitError,
+            InternalServerError,
+        )
+    ),
+    wait=wait_exponential(
+        multiplier=0.5,
+        min=0.5,
+        max=4,
+    ),
+    stop=stop_after_attempt(3),
+    reraise=True,
+)
 
 
 class AzureOpenAIProvider(LLMProvider):
@@ -23,17 +47,10 @@ class AzureOpenAIProvider(LLMProvider):
             azure_endpoint=settings.azure_openai_endpoint,
             api_key=settings.azure_openai_api_key,
             api_version=settings.azure_openai_api_version,
+            timeout=settings.azure_openai_timeout,
         )
 
-    @retry(
-        retry=retry_if_exception_type(Exception),
-        wait=wait_exponential(
-            multiplier=1,
-            min=1,
-            max=8,
-        ),
-        stop=stop_after_attempt(3),
-    )
+    @_llm_retry
     async def _request(
         self,
         request: ChatRequest,

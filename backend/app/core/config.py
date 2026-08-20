@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     azure_openai_endpoint: str | None = None
     azure_openai_api_key: str | None = None
     azure_openai_api_version: str = "2024-10-21"
+    azure_openai_timeout: float = 30.0
 
     otel_enabled: bool = False
     otel_endpoint: str | None = None
