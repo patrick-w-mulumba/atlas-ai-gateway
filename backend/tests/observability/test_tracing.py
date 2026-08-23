@@ -18,10 +18,9 @@ def test_configure_tracing_disabled() -> None:
     with patch("app.observability.tracing.get_settings") as mock_settings:
         mock_settings.return_value.otel_enabled = False
 
-        with patch("app.observability.tracing.create_tracer_provider") as mock_create:
-            configure_tracing()
+        result = configure_tracing()
 
-            mock_create.assert_not_called()
+    assert result is None
 
 
 def test_configure_tracing_enabled() -> None:
@@ -41,3 +40,7 @@ def test_configure_tracing_enabled() -> None:
                 mock_create.assert_called_once_with(endpoint="http://localhost:4318/v1/traces")
 
                 mock_set_provider.assert_called_once_with(mock_provider)
+
+                result = configure_tracing()
+
+                assert result is mock_provider

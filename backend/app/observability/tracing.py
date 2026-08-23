@@ -6,6 +6,8 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from app.core.config import get_settings
 
+_tracer_provider = None
+
 
 def create_tracer_provider(
     endpoint: str,
@@ -28,7 +30,8 @@ def create_tracer_provider(
 tracer = trace.get_tracer("atlas")
 
 
-def configure_tracing() -> None:
+def configure_tracing() -> TracerProvider | None:
+
     settings = get_settings()
 
     if not settings.otel_enabled:
@@ -39,3 +42,5 @@ def configure_tracing() -> None:
     )
 
     trace.set_tracer_provider(provider)
+
+    return provider
