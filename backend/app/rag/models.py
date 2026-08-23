@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class DocumentChunk(BaseModel):
@@ -15,7 +15,8 @@ class RetrievalResult(BaseModel):
 
 
 class RAGRequest(BaseModel):
-    question: str
+    question: str = Field(min_length=1)
+
     top_k: int = Field(
         default=5,
         ge=1,
@@ -25,6 +26,16 @@ class RAGRequest(BaseModel):
     filters: dict[str, str] = Field(
         default_factory=dict,
     )
+
+    @field_validator("question")
+    @classmethod
+    def validate_question(cls, value: str) -> str:
+        value = value.strip()
+
+        if not value:
+            raise ValueError("question cannot be empty")
+
+        return value
 
 
 class RAGSource(BaseModel):

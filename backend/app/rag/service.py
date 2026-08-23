@@ -1,9 +1,14 @@
+import logging
+
+from app.core.logging import get_trace_context
 from app.embeddings.provider import EmbeddingProvider
 from app.llm.models import ChatMessage, ChatRequest
 from app.llm.service import LLMService
 from app.observability.tracing import tracer
 from app.rag.models import RAGResponse, RAGSource
 from app.rag.retriever import Retriever
+
+logger = logging.getLogger(__name__)
 
 
 class RAGService:
@@ -29,6 +34,10 @@ class RAGService:
         with tracer.start_as_current_span("rag.embedding") as span:
             query_embedding = await self._embedding_provider.embed(question)
 
+            logger.info(
+                "RAG query embedding generated",
+            )
+
             span.set_attribute("rag.question_length", len(question))
 
         with tracer.start_as_current_span("rag.retrieval") as span:
@@ -47,6 +56,15 @@ class RAGService:
             ]
 
             span.set_attribute("rag.relevant_results", len(relevant_results))
+
+            logger.info(
+                "RAG retrieval completed",
+                extra={
+                    "result_count": len(results),
+                    "relevant_result_count": len(relevant_results),
+                    **get_trace_context(),
+                },
+            )
 
         sources = [
             RAGSource(
@@ -99,11 +117,15 @@ class RAGService:
         )
 
         with tracer.start_as_current_span("rag.generation") as span:
+            logger.info("RAG generation started")
+
             response = await self._llm_service.chat(request)
 
             span.set_attribute("llm.provider", response.provider)
 
             span.set_attribute("llm.model", response.model)
+
+            logger.info("RAG generation completed")
 
         return RAGResponse(
             answer=response.content,

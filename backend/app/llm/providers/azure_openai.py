@@ -1,3 +1,5 @@
+import logging
+
 from openai import (
     APIConnectionError,
     APITimeoutError,
@@ -9,8 +11,12 @@ from openai.types.chat import ChatCompletion
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.core.config import get_settings
+from app.core.exceptions import LLMServiceError
 from app.llm.models import ChatRequest, ChatResponse
 from app.llm.provider import LLMProvider
+
+logger = logging.getLogger(__name__)
+
 
 _llm_retry = retry(
     retry=retry_if_exception_type(
@@ -72,7 +78,20 @@ class AzureOpenAIProvider(LLMProvider):
         self,
         request: ChatRequest,
     ) -> ChatResponse:
-        response = await self._request(request)
+        try:
+            response = await self._request(request)
+        except (
+            APITimeoutError,
+            APIConnectionError,
+            InternalServerError,
+            RateLimitError,
+            logger.error("LLM request failed after retries"),
+        ) as exc:
+            raise LLMServiceError(
+                "The LLM provider is currently unavailable."
+            ) from exc  # This preserves the original exception for logging/debugging
+            # but app sees message above
+            logger.error("LLM request failed after retries")
 
         content = response.choices[0].message.content or ""
 
