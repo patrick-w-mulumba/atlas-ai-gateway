@@ -29,6 +29,7 @@ class ChatRequest(BaseModel):
     max_tokens: int | None = Field(
         default=None,
         gt=0,
+        le=4096,
     )
 
 

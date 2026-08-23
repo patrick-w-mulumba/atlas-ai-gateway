@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: atlas
       POSTGRES_USER: atlas
-      POSTGRES_PASSWORD: atlas_dev_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-atlas_dev_password}
     ports:
       - "5432:5432"
     volumes:
@@ -44,6 +44,10 @@ services:
       QUERY_UI_CONFIG_FILE: /etc/jaeger/jaeger-ui.json
     volumes:
       - ./jaeger-ui.json:/etc/jaeger/jaeger-ui.json:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:16686/"]
+      interval: 5s
+      retries: 5
 
 volumes:
   postgres_data:

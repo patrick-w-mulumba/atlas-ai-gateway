@@ -57,7 +57,7 @@ async def test_rag_end_to_end(db_session) -> None:
     )
 
     response = await rag_service.answer(
-        question="How long do I have ot request a refund?",
+        question="How long do I have to request a refund?",
         top_k=3,
     )
 

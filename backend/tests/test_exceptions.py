@@ -23,10 +23,11 @@ async def test_llm_service_error_returns_503() -> None:
         LLMServiceError("provider unavailable"),
     )
 
-    body = json.loads(response.body.decode("utf-8"))
-
     assert response.status_code == 503
-    assert body == {"detail": "The AI Service is temporarily unavailable."}
+    assert response.body == (
+        b'{"error":{"code":"LLM_SERVICE_UNAVAILABLE",'
+        b'"message":"The AI service is temporarily unavailable."}}'
+    )
 
 
 @pytest.mark.asyncio
@@ -50,4 +51,5 @@ async def test_llm_service_error_is_handled_by_fastapi() -> None:
             )
 
         assert response.status_code == 503
-        assert response.json() == {"detail": "The AI Service is temporarily unavailable."}
+        assert response.json() == {
+            'error': {'code': 'LLM_SERVICE_UNAVAILABLE', 'message': 'The AI service is temporarily unavailable.'}}
