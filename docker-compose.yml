@@ -32,6 +32,20 @@ services:
       timeout: 5s
       retries: 5
 
+  jaeger:
+    image: jaegertracing/jaeger:2.20.0
+    container_name: atlas-jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      QUERY_UI_CONFIG_FILE: /etc/jaeger/jaeger-ui.json
+    volumes:
+      - ./jaeger-ui.json:/etc/jaeger/jaeger-ui.json:ro
+
 volumes:
   postgres_data:
   redis_data:
+  jaeger_data:
