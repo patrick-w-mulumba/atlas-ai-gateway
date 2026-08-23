@@ -47,14 +47,18 @@ class RAGSource(BaseModel):
 
 
 class RAGResponse(BaseModel):
-    answer: str = Field(description="The answer generated from the retrieved knowledge-base context.")
-    sources: list[RAGSource] = Field(description="Knowledge-base sources used to generate the answer.")
-
-
-class ErrorResponse(BaseModel):
-    error: ErrorDetail
+    answer: str = Field(
+        description="The answer generated from the retrieved knowledge-base context."
+    )
+    sources: list[RAGSource] = Field(
+        description="Knowledge-base sources used to generate the answer."
+    )
 
 
 class ErrorDetail(BaseModel):
     code: str = Field(description="Machine-readable error code.")
     message: str = Field(description="Human-readable Error message.")
+
+
+class ErrorResponse(BaseModel):
+    error: ErrorDetail

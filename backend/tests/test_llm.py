@@ -1,9 +1,8 @@
 import pytest
-from pydantic import ValidationError
-
-from app.llm.models import ChatMessage, ChatRequest, ChatMessageRole
+from app.llm.models import ChatMessage, ChatMessageRole, ChatRequest
 from app.llm.providers.mock import MockLLMProvider
 from app.llm.service import LLMService
+from pydantic import ValidationError
 
 
 @pytest.mark.asyncio
@@ -50,7 +49,7 @@ def test_chat_request_rejects_max_tokens_above_limit() -> None:
                     content="Hello Atlas",
                 )
             ],
-            max_tokens=4097
+            max_tokens=4097,
         )
 
 
@@ -63,5 +62,5 @@ def test_chat_request_accpets_max_tokens_limit() -> None:
                     content="Hello Atlas",
                 )
             ],
-            max_tokens=4097
+            max_tokens=4097,
         )

@@ -1,4 +1,3 @@
-import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -52,4 +51,8 @@ async def test_llm_service_error_is_handled_by_fastapi() -> None:
 
         assert response.status_code == 503
         assert response.json() == {
-            'error': {'code': 'LLM_SERVICE_UNAVAILABLE', 'message': 'The AI service is temporarily unavailable.'}}
+            "error": {
+                "code": "LLM_SERVICE_UNAVAILABLE",
+                "message": "The AI service is temporarily unavailable.",
+            }
+        }
