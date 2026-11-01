@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 
 from app.core.logging import get_trace_context
 from app.embeddings.provider import EmbeddingProvider
@@ -27,6 +28,7 @@ class RAGService:
     async def answer(
         self,
         question: str,
+        tenant_id: UUID,
         top_k: int = 5,
         filters: dict[str, str] | None = None,
     ) -> RAGResponse:
@@ -43,6 +45,7 @@ class RAGService:
         with tracer.start_as_current_span("rag.retrieval") as span:
             results = await self._retriever.retrieve(
                 embedding=query_embedding,
+                tenant_id=tenant_id,
                 top_k=top_k,
                 filters=filters,
             )

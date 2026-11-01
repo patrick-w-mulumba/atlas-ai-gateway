@@ -7,8 +7,10 @@ from app.rag.providers.pgvector import PgVectorRetriever
 @pytest.mark.asyncio
 async def test_pgvector_retriever_returns_nearest_chunk(
     db_session,
+    tenant,
 ) -> None:
     document = Document(
+        tenant_id=tenant.id,
         filename="test.txt",
         content_type="text/plain",
     )
@@ -18,13 +20,15 @@ async def test_pgvector_retriever_returns_nearest_chunk(
     await db_session.flush()
 
     chunk_a = DocumentChunk(
+        tenant_id=tenant.id,
         document_id=document.id,
         content="Python and AI engineering",
         embedding=[1.0, 0.0, 0.0] + [0.0] * 1533,
-        metadata={},
+        document_metadata={},
     )
 
     chunk_b = DocumentChunk(
+        tenant_id=tenant.id,
         document_id=document.id,
         content="PostgreSQL database systems",
         embedding=[0.0, 1.0, 0.0] + [0.0] * 1533,
@@ -38,6 +42,7 @@ async def test_pgvector_retriever_returns_nearest_chunk(
 
     results = await retriever.retrieve(
         embedding=[1.0, 0.0, 0.0] + [0.0] * 1533,
+        tenant_id=tenant.id,
         top_k=2,
     )
 
@@ -49,10 +54,12 @@ async def test_pgvector_retriever_returns_nearest_chunk(
 @pytest.mark.asyncio
 async def test_pgvector_retriever_filters_by_metadata(
     db_session,
+    tenant,
 ) -> None:
     embedding = [1.0, 0.0, 0.0] + [0.0] * 1533
 
     finance_document = Document(
+        tenant_id=tenant.id,
         filename="finance_policy.txt",
         content_type="text/plain",
         document_metadata={
@@ -62,6 +69,7 @@ async def test_pgvector_retriever_filters_by_metadata(
     )
 
     hr_document = Document(
+        tenant_id=tenant.id,
         filename="hr_policy.txt",
         content_type="text/plain",
         document_metadata={
@@ -76,6 +84,7 @@ async def test_pgvector_retriever_filters_by_metadata(
 
     finance_chunk = DocumentChunk(
         document_id=finance_document.id,
+        tenant_id=tenant.id,
         content="Finance refund policy",
         embedding=embedding,
         document_metadata={
@@ -86,6 +95,7 @@ async def test_pgvector_retriever_filters_by_metadata(
 
     hr_chunk = DocumentChunk(
         document_id=hr_document.id,
+        tenant_id=tenant.id,
         content="HR parental leave policy",
         embedding=embedding,
         document_metadata={
@@ -102,6 +112,7 @@ async def test_pgvector_retriever_filters_by_metadata(
 
     results = await retriever.retrieve(
         embedding=embedding,
+        tenant_id=tenant.id,
         top_k=5,
         filters={
             "department": "finance",
@@ -117,10 +128,12 @@ async def test_pgvector_retriever_filters_by_metadata(
 @pytest.mark.asyncio
 async def test_pgvector_retriever_filters_by_multiple_metadata_fields(
     db_session,
+    tenant,
 ) -> None:
     embedding = [1.0, 0.0, 0.0] + [0.0] * 1533
 
     finance_v3 = Document(
+        tenant_id=tenant.id,
         filename="finance_policy_v3.txt",
         content_type="text/plain",
         document_metadata={
@@ -131,6 +144,7 @@ async def test_pgvector_retriever_filters_by_multiple_metadata_fields(
     )
 
     finance_v2 = Document(
+        tenant_id=tenant.id,
         filename="finance_policy_v2.txt",
         content_type="text/plain",
         document_metadata={
@@ -141,6 +155,7 @@ async def test_pgvector_retriever_filters_by_multiple_metadata_fields(
     )
 
     hr_v3 = Document(
+        tenant_id=tenant.id,
         filename="hr_policy_v3.txt",
         content_type="text/plain",
         document_metadata={
@@ -157,6 +172,7 @@ async def test_pgvector_retriever_filters_by_multiple_metadata_fields(
     db_session.add_all(
         [
             DocumentChunk(
+                tenant_id=tenant.id,
                 document_id=finance_v3.id,
                 content="Finance policy version 3",
                 embedding=embedding,
@@ -167,6 +183,7 @@ async def test_pgvector_retriever_filters_by_multiple_metadata_fields(
                 },
             ),
             DocumentChunk(
+                tenant_id=tenant.id,
                 document_id=finance_v2.id,
                 content="Finance policy version 2",
                 embedding=embedding,
@@ -177,6 +194,7 @@ async def test_pgvector_retriever_filters_by_multiple_metadata_fields(
                 },
             ),
             DocumentChunk(
+                tenant_id=tenant.id,
                 document_id=hr_v3.id,
                 content="HR policy version 3",
                 embedding=embedding,
@@ -195,6 +213,7 @@ async def test_pgvector_retriever_filters_by_multiple_metadata_fields(
 
     results = await retriever.retrieve(
         embedding=embedding,
+        tenant_id=tenant.id,
         top_k=5,
         filters={
             "department": "finance",

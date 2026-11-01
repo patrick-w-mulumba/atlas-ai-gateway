@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.embeddings.provider import EmbeddingProvider
@@ -21,6 +23,7 @@ class IngestionService:
     async def ingest(
         self,
         session: AsyncSession,
+        tenant_id: uuid.UUID,
         filename: str,
         content_type: str,
         content: bytes,
@@ -28,23 +31,23 @@ class IngestionService:
     ) -> Document:
 
         text = await self._loader.load(content)
-
         chunks = self._chunker.chunk(text)
 
         document = Document(
+            tenant_id=tenant_id,
             filename=filename,
             content_type=content_type,
             document_metadata=metadata or {},
         )
 
         session.add(document)
-
         await session.flush()
 
         for chunk in chunks:
             embedding = await self._embedding_provider.embed(chunk)
 
             document_chunk = DocumentChunk(
+                tenant_id=tenant_id,
                 document_id=document.id,
                 content=chunk,
                 embedding=embedding,

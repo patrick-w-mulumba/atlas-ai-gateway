@@ -1,3 +1,5 @@
+import uuid
+
 from app.rag.models import DocumentChunk, RetrievalResult
 from app.rag.retriever import Retriever
 
@@ -9,6 +11,7 @@ class MemoryRetriever(Retriever):
     async def retrieve(
         self,
         embedding: list[float],
+        tenant_id: uuid.UUID,
         top_k: int = 5,
         filters: dict[str, str] | None = None,
     ) -> list[RetrievalResult]:

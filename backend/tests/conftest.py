@@ -1,7 +1,9 @@
+import uuid
 from collections.abc import AsyncGenerator
 
 import pytest_asyncio
 from app.core.config import get_settings
+from app.models.tenant import Tenant
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
@@ -32,3 +34,16 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
             await transaction.rollback()
 
     await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def tenant(db_session):
+    tenant = Tenant(
+        name="Test Tenant",
+        slug=f"test-{uuid.uuid4().hex}",
+    )
+
+    db_session.add(tenant)
+    await db_session.flush()
+
+    return tenant

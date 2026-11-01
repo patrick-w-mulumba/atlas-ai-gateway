@@ -4,7 +4,7 @@ from app.rag.providers.memory import MemoryRetriever
 
 
 @pytest.mark.asyncio
-async def test_memory_retriever_returns_chunks() -> None:
+async def test_memory_retriever_returns_chunks(tenant) -> None:
     chunks = [
         DocumentChunk(
             id="1",
@@ -24,7 +24,7 @@ async def test_memory_retriever_returns_chunks() -> None:
 
     embedding = [0.1] * 1536
 
-    results = await retriever.retrieve(embedding=embedding, top_k=1)
+    results = await retriever.retrieve(embedding=embedding, tenant_id=tenant.id, top_k=1)
 
     assert len(results) == 1
     assert results[0].chunk.id == "1"
@@ -32,7 +32,7 @@ async def test_memory_retriever_returns_chunks() -> None:
 
 
 @pytest.mark.asyncio
-async def test_memory_retriever_with_filters_by_metadata() -> None:
+async def test_memory_retriever_with_filters_by_metadata(tenant) -> None:
     chunks = [
         DocumentChunk(
             id="finance-chunk",
@@ -60,6 +60,7 @@ async def test_memory_retriever_with_filters_by_metadata() -> None:
 
     results = await retriever.retrieve(
         embedding=[1.0, 0.0, 0.0],
+        tenant_id=tenant.id,
         top_k=5,
         filters={
             "department": "finance",

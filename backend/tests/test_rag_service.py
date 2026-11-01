@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 from app.llm.models import ChatResponse
 from app.rag.models import DocumentChunk, RetrievalResult
@@ -16,6 +18,7 @@ class FakeRetriever:
     async def retrieve(
         self,
         embedding: list[float],
+        tenant_id: uuid.UUID,
         top_k: int = 5,
         filters: dict[str, str] | None = None,
     ) -> list[RetrievalResult]:
@@ -47,7 +50,7 @@ class FakeLLMService:
 
 
 @pytest.mark.asyncio
-async def test_rag_service_builds_grounded_response() -> None:
+async def test_rag_service_builds_grounded_response(tenant) -> None:
 
     service = RAGService(
         embedding_provider=FakeEmbeddingProvider(),
@@ -57,6 +60,7 @@ async def test_rag_service_builds_grounded_response() -> None:
 
     response = await service.answer(
         question="What is Python?",
+        tenant_id=tenant.id,
         top_k=3,
     )
 

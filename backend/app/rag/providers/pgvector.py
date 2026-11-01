@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,15 +17,29 @@ class PgVectorRetriever(Retriever):
     async def retrieve(
         self,
         embedding: list[float],
+        tenant_id: UUID,
         top_k: int = 5,
         filters: dict[str, str] | None = None,
     ) -> list[RetrievalResult]:
 
-        statement = select(
-            DocumentChunk,
-            Document,
-            DocumentChunk.embedding.cosine_distance(embedding).label("distance"),
-        ).join(Document, Document.id == DocumentChunk.document_id)
+        distance = DocumentChunk.embedding.cosine_distance(embedding)
+
+        statement = (
+            select(
+                DocumentChunk,
+                Document,
+                distance.label("distance"),
+            )
+            .join(
+                Document,
+                (Document.id == DocumentChunk.document_id)
+                & (Document.tenant_id == DocumentChunk.tenant_id),
+            )
+            .where(
+                Document.tenant_id == tenant_id,
+                DocumentChunk.tenant_id == tenant_id,
+            )
+        )
 
         if filters:
             for key, value in filters.items():
@@ -31,9 +47,7 @@ class PgVectorRetriever(Retriever):
                     DocumentChunk.document_metadata[key].as_string() == value
                 )
 
-        statement = statement.order_by(DocumentChunk.embedding.cosine_distance(embedding)).limit(
-            top_k
-        )
+        statement = statement.order_by(distance).limit(top_k)
 
         result = await self._session.execute(statement)
 

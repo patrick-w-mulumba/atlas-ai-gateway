@@ -10,6 +10,7 @@ from sqlalchemy import select
 @pytest.mark.asyncio
 async def test_document_ingestion(
     db_session,
+    tenant,
 ) -> None:
 
     service = IngestionService(
@@ -23,6 +24,7 @@ async def test_document_ingestion(
 
     document = await service.ingest(
         session=db_session,
+        tenant_id=tenant.id,
         filename="test.txt",
         content_type="text/plain",
         content=b"Python is useful for building AI applications with FastAPI.",
@@ -36,5 +38,8 @@ async def test_document_ingestion(
 
     chunks = result.scalars().all()
 
+    assert document.tenant_id == tenant.id
+
     assert len(chunks) > 1
+    assert all(chunk.tenant_id == tenant.id for chunk in chunks)
     assert all(len(chunk.embedding) == 1536 for chunk in chunks)

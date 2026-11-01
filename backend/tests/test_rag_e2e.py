@@ -26,7 +26,7 @@ class TestLLMService:
 
 
 @pytest.mark.asyncio
-async def test_rag_end_to_end(db_session) -> None:
+async def test_rag_end_to_end(db_session, tenant) -> None:
 
     embedding_provider = TestEmbeddingProvider()
 
@@ -41,6 +41,7 @@ async def test_rag_end_to_end(db_session) -> None:
 
     document = await ingestion_service.ingest(
         session=db_session,
+        tenant_id=tenant.id,
         filename="refund_policy.txt",
         content_type="text/plain",
         content=(b"Customers may request a refund within 30 days of purchase."),
@@ -58,6 +59,7 @@ async def test_rag_end_to_end(db_session) -> None:
 
     response = await rag_service.answer(
         question="How long do I have to request a refund?",
+        tenant_id=tenant.id,
         top_k=3,
     )
 
@@ -73,7 +75,7 @@ async def test_rag_end_to_end(db_session) -> None:
 
 
 @pytest.mark.asyncio
-async def test_rag_service_rejects_irrelevant_context(db_session) -> None:
+async def test_rag_service_rejects_irrelevant_context(db_session, tenant) -> None:
 
     embedding_provider = TestEmbeddingProvider()
 
@@ -88,6 +90,7 @@ async def test_rag_service_rejects_irrelevant_context(db_session) -> None:
 
     await ingestion_service.ingest(
         session=db_session,
+        tenant_id=tenant.id,
         filename="refund_policy.txt",
         content_type="text/plain",
         content=b"Customers may request a refund within 30 days of purchase.",
@@ -104,6 +107,7 @@ async def test_rag_service_rejects_irrelevant_context(db_session) -> None:
 
     response = await rag_service.answer(
         question="What is our parental leave policy?",
+        tenant_id=tenant.id,
         top_k=3,
     )
 
