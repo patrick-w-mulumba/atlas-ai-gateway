@@ -1,7 +1,6 @@
-import pytest
-
 from uuid import uuid4
 
+import pytest
 from app.models import DocumentChunk
 from app.models.document import Document
 from app.models.tenant import Tenant

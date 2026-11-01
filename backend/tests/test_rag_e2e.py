@@ -1,17 +1,15 @@
-import pytest
-
 from uuid import uuid4
 
+import pytest
 from app.ingestion.chunker import Chunker
-from app.ingestion.service import IngestionService
 from app.ingestion.loader import DocumentLoader
+from app.ingestion.service import IngestionService
 from app.ingestion.simple_chunker import SimpleChunker
 from app.ingestion.text_loader import TextLoader
 from app.llm.models import ChatResponse
 from app.models.tenant import Tenant
 from app.rag.providers.pgvector import PgVectorRetriever
 from app.rag.service import RAGService
-from httpx._decoders import TextChunker
 
 
 class TestEmbeddingProvider:
@@ -162,4 +160,28 @@ async def test_rag_end_to_end_enforces_tenant_isolation(db_session, tenant) -> N
         filename="tenant_b_refund_policy.txt",
         content_type="text/plain",
         content=b"Customers may request a refund within 90 days of purchase.",
+    )
+
+    retriever = PgVectorRetriever(session=db_session)
+
+    rag_service = RAGService(
+        retriever=retriever,
+        embedding_provider=TestEmbeddingProvider(),
+        llm_service=TestLLMService(),
+    )
+
+    response = await rag_service.answer(
+        question="What is the refund policy?",
+        tenant_id=tenant_a.id,
+        top_k=10,
+    )
+
+    assert response.sources
+    assert all(
+        source.document_id == str(document_a.id)
+        for source in response.sources
+    )
+    assert all(
+        source.document_id != str(document_b.id)
+        for source in response.sources
     )
