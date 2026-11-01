@@ -1,10 +1,17 @@
 import pytest
+
+from uuid import uuid4
+
+from app.ingestion.chunker import Chunker
 from app.ingestion.service import IngestionService
+from app.ingestion.loader import DocumentLoader
 from app.ingestion.simple_chunker import SimpleChunker
 from app.ingestion.text_loader import TextLoader
 from app.llm.models import ChatResponse
+from app.models.tenant import Tenant
 from app.rag.providers.pgvector import PgVectorRetriever
 from app.rag.service import RAGService
+from httpx._decoders import TextChunker
 
 
 class TestEmbeddingProvider:
@@ -23,6 +30,16 @@ class TestLLMService:
             model="test-model",
             provider="test",
         )
+
+
+class TestDocumentLoader(DocumentLoader):
+    async def load(self, content:bytes) -> str:
+        return content.decode("utf-8")
+
+
+class TestChunker(Chunker):
+    def chunk(self, text: str) -> list[str]:
+        return [text]
 
 
 @pytest.mark.asyncio
@@ -113,3 +130,36 @@ async def test_rag_service_rejects_irrelevant_context(db_session, tenant) -> Non
 
     assert response.sources == []
     assert "dont have enough information" in response.answer
+
+@pytest.mark.asyncio
+async def test_rag_end_to_end_enforces_tenant_isolation(db_session, tenant) -> None:
+    tenant_a = tenant
+    tenant_b = Tenant(
+        name="Tenant B",
+        slug=f"tenant-b-{uuid4().hex}",
+    )
+
+    db_session.add(tenant_b)
+    await db_session.flush()
+
+    ingestion_service = IngestionService(
+        loader=TestDocumentLoader(),
+        chunker=TestChunker(),
+        embedding_provider=TestEmbeddingProvider(),
+    )
+
+    document_a = await ingestion_service.ingest(
+        session=db_session,
+        tenant_id=tenant_a.id,
+        filename="tenant_a_refund_policy.txt",
+        content_type="text/plain",
+        content=b"Customers may request a refund within 30 days of purchase.",
+    )
+
+    document_b = await ingestion_service.ingest(
+        session=db_session,
+        tenant_id=tenant_b.id,
+        filename="tenant_b_refund_policy.txt",
+        content_type="text/plain",
+        content=b"Customers may request a refund within 90 days of purchase.",
+    )

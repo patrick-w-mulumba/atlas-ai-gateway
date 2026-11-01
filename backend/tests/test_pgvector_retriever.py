@@ -1,6 +1,10 @@
 import pytest
+
+from uuid import uuid4
+
 from app.models import DocumentChunk
 from app.models.document import Document
+from app.models.tenant import Tenant
 from app.rag.providers.pgvector import PgVectorRetriever
 
 
@@ -224,3 +228,158 @@ async def test_pgvector_retriever_filters_by_multiple_metadata_fields(
     assert len(results) == 1
     assert results[0].chunk.content == "Finance policy version 3"
     assert results[0].chunk.filename == "finance_policy_v3.txt"
+
+
+@pytest.mark.asyncio
+async def test_pgvector_retriever_enforces_tenant_isolation(
+        db_session,
+        tenant,
+) -> None:
+    embedding = [1.0, 0.0, 0.0] + [0.0] * 1533
+
+    # Tenant A is provided by the existing tenant fixture
+
+    tenant_a = tenant
+
+    # Create Tenant B.
+    tenant_b = Tenant(
+        name="Tenant B",
+        slug=f"tenant-b-{uuid4().hex}",
+    )
+
+    db_session.add(tenant_b)
+    await db_session.flush()
+
+    # Create one document for each tenant.
+    document_a = Document(
+        tenant_id=tenant_a.id,
+        filename="tenant_a_policy.txt",
+        content_type="text/plain",
+    )
+
+    document_b = Document(
+        tenant_id=tenant_b.id,
+        filename="tenant_b_policy.txt",
+        content_type="text/plain",
+    )
+
+    db_session.add_all([document_a, document_b])
+    await db_session.flush()
+
+    # Both tenants deliberately have identical embeddings.
+    chunk_a = DocumentChunk(
+        tenant_id=tenant_a.id,
+        document_id=document_a.id,
+        content="Tenant A confidential refund policy",
+        embedding=embedding,
+        document_metadata={"department": "finance"},
+    )
+
+    chunk_b = DocumentChunk(
+        tenant_id=tenant_b.id,
+        document_id=document_b.id,
+        content="Tenant B confidential refund policy",
+        embedding=embedding,
+        document_metadata={"department": "finance"},
+    )
+
+    db_session.add_all([chunk_a, chunk_b])
+    await db_session.commit()
+
+    retriever = PgVectorRetriever(session=db_session)
+
+    # Retrieve as Tenant A.
+    results_a = await retriever.retrieve(
+        embedding=embedding,
+        tenant_id=tenant_a.id,
+        top_k=10,
+    )
+
+    # Retrieve as Tenant B.
+    results_b = await retriever.retrieve(
+        embedding=embedding,
+        tenant_id=tenant_b.id,
+        top_k=10,
+    )
+
+    # Tenant A must only see its own document.
+    assert len(results_a) == 1
+    assert results_a[0].chunk.document_id == str(document_a.id)
+    assert results_a[0].chunk.content == "Tenant A confidential refund policy"
+
+    # Tenant B must only see its own document
+    assert len(results_b) == 1
+    assert results_b[0].chunk.document_id == str(document_b.id)
+    assert results_b[0].chunk.content == "Tenant B confidential refund policy"
+
+
+@pytest.mark.asyncio
+async def test_pgvector_retriever_enforces_tenant_isolation_with_metadata_filters(
+        db_session, tenant,
+) -> None:
+    from uuid import uuid4
+
+    embedding = [1.0, 0.0, 0.0] + [0.0] * 1533
+
+    # Tenant A is provided by the existing tenant fixture
+
+    tenant_a = tenant
+
+    # Create Tenant B.
+    tenant_b = Tenant(
+        name="Tenant B",
+        slug=f"tenant-b-{uuid4().hex}",
+    )
+
+    db_session.add(tenant_b)
+    await db_session.flush()
+
+    # Create one document for each tenant.
+    document_a = Document(
+        tenant_id=tenant_a.id,
+        filename="tenant_a_finance.txt",
+        content_type="text/plain",
+    )
+
+    document_b = Document(
+        tenant_id=tenant_b.id,
+        filename="tenant_b_finance.txt",
+        content_type="text/plain",
+    )
+
+    db_session.add_all([document_a, document_b])
+    await db_session.flush()
+
+    # Both tenants deliberately have identical embeddings.
+    db_session.add_all([
+        DocumentChunk(
+            tenant_id=tenant_a.id,
+            document_id=document_a.id,
+            content="Tenant A finance policy",
+            embedding=embedding,
+            document_metadata={"department": "finance"},
+        ),
+        DocumentChunk(
+            tenant_id=tenant_b.id,
+            document_id=document_b.id,
+            content="Tenant B finance policy",
+            embedding=embedding,
+            document_metadata={"department": "finance"},
+            ),
+        ]
+    )
+
+    await db_session.commit()
+
+    retriever = PgVectorRetriever(session=db_session)
+
+    results = await retriever.retrieve(
+        embedding=embedding,
+        tenant_id=tenant_a.id,
+        top_k=10,
+        filters={"department": "finance"},
+    )
+
+    assert len(results) == 1
+    assert results[0].chunk.document_id == str(document_a.id)
+    assert results[0].chunk.content == "Tenant A finance policy"
