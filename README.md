@@ -208,6 +208,26 @@ Swagger/OpenAPI:
 http://localhost:8000/docs 
 ```
 
+## Database Config
+
+Make sure that the Database has vector database accept vector db commands
+```commandline
+docker exec -it atlas-postgres psql -U atlas -d atlas
+```
+Check if vector extension is enabled
+
+```SQL
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+Run Alembic migrations
+
+```commandline
+alembic upgrade head
+```
+
+
+
 ## API
 
 ### RAG Query
@@ -220,6 +240,8 @@ Example:
 {
   "question": "How long do customers have to request a refund?",
   "top_k": 5,
+  "messages": [
+    {"role": "user", "content": "Hello Atlas"}],
   "filters": {}
 }
 ```
